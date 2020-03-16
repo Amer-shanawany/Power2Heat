@@ -1,0 +1,42 @@
+# ./docker-compose.yml
+
+version: '3'
+
+services:
+  db:
+    image: mysql:5.7
+    container_name: mysql_db
+    environment:
+      MYSQL_ROOT_PASSWORD: my_secret_pw_shh
+      MYSQL_DATABASE: power2heat_db
+      MYSQL_USER: devuser
+      MYSQL_PASSWORD: devpass
+    volumes:
+      - ./mysql/:/var/lib/mysql
+    ports:
+      - "9906:3306"
+  phpMyAdmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: phpmyadmin_web
+    environment:
+      - PMA_HOST=db
+    restart: always
+    depends_on:
+      - db
+    volumes:
+      - ./phpMyAdmin/:/var/www/html
+    ports:
+      - "8080:80"
+    stdin_open: true
+    tty: true
+  php:
+    image: php_mysqli
+    container_name: php_web
+    depends_on:
+      - db
+    volumes:
+      - ./php/:/var/www/html/
+    ports:
+      - "8100:80"
+    stdin_open: true
+    tty: true  
