@@ -1,12 +1,10 @@
-
-byte statusLed    = 13;
-
+ 
 byte sensorInterrupt = 0;  // 0 = digital pin 2
 byte sensorPin       = 2;
 
 // The hall-effect flow sensor outputs approximately 4.5 pulses per second per
 // litre/minute of flow.
-float calibrationFactor = 8;//7.5
+float calibrationFactor = 8;// The datasheet says 7.5 but after calibration and testing 8 seems to be a better value
 
 volatile byte pulseCount;  
 
@@ -18,12 +16,8 @@ unsigned long oldTime;
 
 void setup()
 {
-  
-  // Initialize a serial connection for reporting values to the host
   Serial.begin(9600);
-  // Set up the status LED line as an output
-  pinMode(statusLed, OUTPUT);
-  digitalWrite(statusLed, HIGH);  // We have an active-low LED attached
+ 
   
   pinMode(sensorPin, INPUT);
   digitalWrite(sensorPin, HIGH);
@@ -34,9 +28,6 @@ void setup()
   totalMilliLitres  = 0;
   oldTime           = 0;
 
-  // The Hall-effect sensor is connected to pin 2 which uses interrupt 0.
-  // Configured to trigger on a FALLING state change (transition from HIGH
-  // state to LOW state)
   attachInterrupt(sensorInterrupt, pulseCounter, FALLING);
 }
 
@@ -45,23 +36,19 @@ void loop()
    
    if((millis() - oldTime) > 1000)    // Only process counters once per second
   { 
-    // Disable the interrupt while calculating flow rate and sending the value to
-    // the host
+    // Disable the interrupt while calculating the flow rate
     detachInterrupt(sensorInterrupt);
-        
-    // Because this loop may not complete in exactly 1 second intervals we calculate
-    // the number of milliseconds that have passed since the last execution and use
-    // that to scale the output. We also apply the calibrationFactor to scale the output
-    // based on the number of pulses per second per units of measure (litres/minute in
-    // this case) coming from the sensor.
+     /**
+     * calculate the time in miliseconds since the last calulation and scale the out put accordingly
+     * and then adjusting the result by applying a calibration factor
+    */
     flowRate = ((1000.0 / (millis() - oldTime)) * pulseCount) / calibrationFactor;
-    
-    // Note the time this processing pass was executed. Note that because we've
-    // disabled interrupts the millis() function won't actually be incrementing right
-    // at this point, but it will still return the value it was set to just before
-    // interrupts went away.
     oldTime = millis();
-    
+    /*
+    * calculating the flow rate Litres per minutes and then converting to mililitres 
+    * for calibrating purposes
+    * it's possible to use L/Min
+    */
     // Divide the flow rate in litres/minute by 60 to determine how many litres have
     // passed through the sensor in this 1 second interval, then multiply by 1000 to
     // convert to millilitres.
