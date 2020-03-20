@@ -1,0 +1,6 @@
+FROM nodered/node-red-docker
+#RUN npm install bufferutil
+#RUN npm install utf-8-validate
+#CMD ["/bin/bash", "cd /data"]
+RUN npm install node-red-dashboard
+RUN npm install node-red-node-mysql
