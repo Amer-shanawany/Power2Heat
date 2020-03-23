@@ -1,0 +1,30 @@
+# STEP1: build a docker image using docker build . -t mynodered
+# STEP2: docker-compose up -d
+
+version: "3"
+services:
+  broker:
+    image: eclipse-mosquitto
+    volumes:
+      - "./mosquitto/config:/mosquitto/config"
+      - "./mosquitto/data:/mosquitto/data"
+      - "./mosquitto/log:/mosquitto/log"
+    ports:
+      - "1883:1883"
+    networks:
+      - localnet
+  node-red:
+    depends_on:
+      - broker #use "broker" as the mqtt-addres in node-red
+    image: my-node-red
+    volumes:
+      - "./node-red:/data"
+    user: "0"
+    ports:
+      - "1880:1880"
+    networks: 
+      - localnet
+      
+networks: 
+  localnet: 
+    driver: bridge    
