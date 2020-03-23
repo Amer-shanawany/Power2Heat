@@ -19,7 +19,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
 
   if (topic = "boiler/switch") {
     for (int i=0;i<length;i++) {
-      digitalWrite(7, !((int)payload[i]-48)); //negatieve logica...
+      digitalWrite(7, ((int)payload[i]-48));
     }  
   }
 }
@@ -54,8 +54,8 @@ void setup() {
   Serial.begin(9600);
 
   // setup mqtt client
-  //mqttClient.setServer("78.47.247.175",1883);
-  mqttClient.setServer("192.168.1.45",1883);
+  mqttClient.setServer("78.47.247.175",1883);
+  //mqttClient.setServer("192.168.1.45",1883);
   mqttClient.setCallback(callback);
 
   //setup ethernet/DHCP
