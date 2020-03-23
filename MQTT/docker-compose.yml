@@ -1,4 +1,4 @@
-# STEP1: build a docker image using docker build . -t mynodered
+# STEP1: build a docker image using docker build . -t my-node-red
 # STEP2: docker-compose up -d
 
 version: "3"
@@ -11,6 +11,8 @@ services:
       - "./mosquitto/log:/mosquitto/log"
     ports:
       - "1883:1883"
+    #user: "0"
+    #user: ${CURRENT_UID} 
     networks:
       - localnet
   node-red:
@@ -19,9 +21,10 @@ services:
     image: my-node-red
     volumes:
       - "./node-red:/data"
-    #user: "0"
     ports:
       - "1880:1880"
+    user: "0"
+    #user: ${CURRENT_UID} 
     networks: 
       - localnet
       

@@ -6,11 +6,10 @@
 #define INTERVAL        10000 // 10 sec delay between publishing
 uint8_t mac[6] = {0x00,0x01,0x02,0x03,0x04,0x05};
 
-long sensorTime = millis();
-long previousSensorTime;
+long previousMillis;
 
 void callback(char* topic, byte* payload, unsigned int length) {
-  Serial.print("Message arrived [");
+  Serial.print("Message received [");
   Serial.print(topic);
   Serial.print("] ");
   for (int i=0;i<length;i++) {
@@ -18,7 +17,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
   }
   Serial.println();
 
-  if (topic = "room/lamp") {
+  if (topic = "boiler/switch") {
     for (int i=0;i<length;i++) {
       digitalWrite(7, !((int)payload[i]-48)); //negatieve logica...
     }  
@@ -36,11 +35,9 @@ void reconnect() {
     if (mqttClient.connect("arduinoClient")) {
       Serial.println("connected");
       // Once connected, publish an announcement...
-      mqttClient.publish("outTopic","hello world");
-      mqttClient.publish("room/temperature", "20");
-      mqttClient.publish("room/humidity", "50");
+      mqttClient.publish("boiler/status","Connected");
       // ... and resubscribe
-      mqttClient.subscribe("room/lamp");
+      mqttClient.subscribe("boiler/switch");
     } else {
       Serial.print("failed, rc=");
       Serial.print(mqttClient.state());
@@ -57,6 +54,7 @@ void setup() {
   Serial.begin(9600);
 
   // setup mqtt client
+  //mqttClient.setServer("78.47.247.175",1883);
   mqttClient.setServer("192.168.1.45",1883);
   mqttClient.setCallback(callback);
 
@@ -72,13 +70,34 @@ void setup() {
   Serial.print("DNS Server IP     : ");
   Serial.println(Ethernet.dnsServerIP());
 
-  previousSensorTime = sensorTime;
+  previousMillis = millis();
 }
 
 void loop() {
-  
   if (!mqttClient.connected()) {
     reconnect();
   }
+
+  if(millis() - previousMillis > INTERVAL) {
+    sendData();
+    previousMillis = millis();
+  }
+  
   mqttClient.loop();
+}
+
+void sendData() {
+  Serial.println("Data transmitted");
+  stringToPublish("boiler/status","Data received");
+  stringToPublish("boiler/tempIn", String(random(0,90)));
+  stringToPublish("boiler/tempOut", String(random(0,90)));
+  stringToPublish("boiler/waterFlow", (String)random(0,30));
+}
+
+void stringToPublish(String topicToPublish, String stringToPublish) {
+  char charBufA[topicToPublish.length() + 1];
+  topicToPublish.toCharArray(charBufA,topicToPublish.length() + 1);
+  char charBufB[stringToPublish.length() + 1];
+  stringToPublish.toCharArray(charBufB,stringToPublish.length() + 1);
+  mqttClient.publish(charBufA, charBufB);
 }
