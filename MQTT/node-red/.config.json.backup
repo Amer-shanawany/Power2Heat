@@ -650,7 +650,7 @@
   },
   "node-red-node-mysql": {
    "name": "node-red-node-mysql",
-   "version": "0.0.19",
+   "version": "0.0.20",
    "local": false,
    "nodes": {
     "mysql": {
