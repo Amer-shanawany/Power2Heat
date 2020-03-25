@@ -769,6 +769,23 @@
      "file": "/usr/src/node-red/node_modules/node-red-node-twitter/27-twitter.js"
     }
    }
+  },
+  "node-red-contrib-uibuilder": {
+   "name": "node-red-contrib-uibuilder",
+   "version": "2.0.7",
+   "local": false,
+   "nodes": {
+    "uibuilder": {
+     "name": "uibuilder",
+     "types": [
+      "uibuilder"
+     ],
+     "enabled": true,
+     "local": true,
+     "module": "node-red-contrib-uibuilder",
+     "file": "/data/node_modules/node-red-contrib-uibuilder/nodes/uibuilder.js"
+    }
+   }
   }
  },
  "_credentialSecret": "30da7f3ce96ff35dd05e70e56f70f070db34a4db20a5fd1751061f9af4642ca2",

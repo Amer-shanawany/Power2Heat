@@ -54,7 +54,7 @@ void setup() {
   Serial.begin(9600);
 
   // setup mqtt client
-  mqttClient.setServer("78.47.247.175",1883);
+  mqttClient.setServer("88.99.186.143",1883);
   //mqttClient.setServer("192.168.1.45",1883);
   mqttClient.setCallback(callback);
 
