@@ -5,6 +5,7 @@ version: "3"
 services:
   broker:
     image: eclipse-mosquitto
+    restart: always
     #volumes:
     #  - "./mosquitto/config:/mosquitto/config"
     #  - "./mosquitto/data:/mosquitto/data"
@@ -19,6 +20,7 @@ services:
     depends_on:
       - broker #use "broker" as the mqtt-addres in node-red
     image: my-node-red
+    restart: always
     volumes:
       - "./node-red:/data"
     ports:
