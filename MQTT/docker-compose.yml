@@ -3,8 +3,24 @@
 
 version: "3"
 services:
-  broker:
+  mongo:
+    image: mongo
+    container_name: P2H_mongo #give your container a name
+    restart: always
+    environment: 
+      - MONGO_INITDB_DATABASE=power2heat #our database
+      - MONGO_INITDB_ROOT_USERNAME=root #set your container root username
+      - MONGO_INITDB_ROOT_PASSWORD=secret #set your container root password
+    volumes: 
+      - ./init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
+      - ./mongo:/data/db
+    ports:
+      - '27017-27019:27017-27019'
+    networks:
+      - localnet
+  mosquitto:
     image: eclipse-mosquitto
+    container_name: P2H_mosquitto
     restart: always
     #volumes:
     #  - "./mosquitto/config:/mosquitto/config"
@@ -18,8 +34,10 @@ services:
       - localnet
   node-red:
     depends_on:
-      - broker #use "broker" as the mqtt-addres in node-red
+      - mosquitto #use "mosquitto" as the mqtt-addres in node-red
+      - mongo #use "mongo" as the mongo-address in node-red
     image: my-node-red
+    container_name: P2H_node-red
     restart: always
     volumes:
       - "./node-red:/data"
