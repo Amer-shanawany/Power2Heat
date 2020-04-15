@@ -1,7 +1,7 @@
 const express = require('express');
 const app = express()
 const expressLayouts = require('express-ejs-layouts')
-const monogoose = require('mongoose');
+const mongoose = require('mongoose');
 const PORT = process.env.PORT || 3000;
 const flash = require('connect-flash');
 const session = require('express-session');
@@ -14,16 +14,18 @@ require('./config/passport')(passport);
 //app.get('/',(req,res)=> res.send('Hello containers world!'))
 
 //DB config 
-
 const db_uri = require('./config/keys').MongoURI;
-const db = require('./modules/User').User;
+const db = require('./modules/User').User; // i'm not using this line 
+
 //connect to Mongo
- 
-monogoose.connect(db_uri,{useNewUrlParser:true, useUnifiedTopology: true})
+mongoose.connect(db_uri,{useNewUrlParser:true, useUnifiedTopology: true})
     .then(()=> {
         console.log('MongoDB is connected ... ')
 })
     .catch(err=>console.log(err))
+//mongoose deprecated method https://mongoosejs.com/docs/deprecations.html#findandmodify 
+mongoose.set('useFindAndModify', false);
+
 
 //EJS
 app.use(expressLayouts);
@@ -50,7 +52,10 @@ app.use(flash());
 // Global variables
 app.use((req, res, next)=> {
   res.locals.success_msg = req.flash('success_msg');
+  res.locals.success_msg_add_node = req.flash('success_msg_add_node');
   res.locals.error_msg = req.flash('error_msg');
+  res.locals.error_msg_node = req.flash('error_msg_node');
+  res.locals.error_msg_regex = req.flash('error_msg_regex');
   res.locals.error = req.flash('error');
   next();
 });
@@ -78,7 +83,8 @@ app.use(function(req, res, next){
   res.type('txt').send('Not found');
 });
 
-broker()
-//sub()
+//broker()// TODO: connect this broker to mosquitto docker container !! 
+//const sub = require('./sub')// sub can subscribe to an active MQTT Server 
+//console.log(sub) // sub can subscribe to an active MQTT Server
 
 app.listen(PORT,console.log(`Server is runnuing on port ${PORT}`));

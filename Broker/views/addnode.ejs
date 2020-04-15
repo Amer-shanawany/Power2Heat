@@ -1,0 +1,22 @@
+<br>
+<form action="/users/addnode" method="POST">
+ 
+    <div class="form-group">
+      <label for="NodeID">Boiler ID:</label>
+      <input
+        type="string"
+        id="nodeID"
+        name="nodeID"
+        class="form-control"
+        placeholder="Enter your boiler ID"
+      />
+    </div>   
+     
+     
+    <button type="submit" class="btn btn-primary">Submit</button>
+    <a href="/dashboard" class="btn btn-secondary">Back</a>
+
+  </form>
+
+<br>
+<%- include('./partials/messages.ejs') %>

@@ -1,8 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const passport = require('passport')
+
 //User model
 const User = require('../modules/User');
+//Boiler model 
+const Boiler = require('../modules/Boiler')
 //Encrypting Users data 
 const bcrypt = require('bcryptjs')
 
@@ -79,14 +82,96 @@ router.post('/register',(req,res)=>{
         
     }
 })
+
 // Login Handle
 router.post('/login',(req,res,next)=>{
     passport.authenticate('local', {
-        successRedirect:'/dashboard',
+        successRedirect:'/main',
         failureRedirect:'/users/login',
         failureFlash:true 
     })(req, res, next);
      
+})
+
+//Add a new Node page Handle 
+router.get('/addnode',(req,res)=>res.render('addnode'));
+
+//Add a new Node Id handle
+router.post('/addnode',(req,res)=>{
+     const userID = req.user._id;
+        // TODO: Check RegEx [A-Z]{8} 
+    const {nodeID} = req.body;
+    let errors=[];
+    const regex = /([A-Z]{8})/g;
+
+    // Example: AXDCFEQA
+    if(nodeID==''){
+        errors.push({msg: `The field was empty`})
+    }
+    if(!regex.test(nodeID)){
+        console.log(regex.test(nodeID))
+        errors.push({msg: `The ID you've entered doesn't match our database`})
+       // req.flash('error_msg_regex',`The ID you've entered doesn't match our database ${regex}`)
+      //  res.render('/addnode')
+        
+    }
+    
+    
+    if(errors.length>0){
+        res.render('addnode',{errors})
+    }else{
+    User.findOne({_id: userID}).then(user=>{
+        let userNodes = user.nodes;
+      
+         if(user.nodes.includes(nodeID)){
+             //boiler exists ///TODO : make the check on the user side NOT on the boiler document 
+            errors.push({msg: 'boiler is already registered'})
+            //req.flash('error_msg_node',`boiler ${nodeID} is already registered`)
+           // res.render('/addnode')
+            res.render('addnode',{errors})
+        }else{
+
+            User.findOneAndUpdate({ _id: userID} , {$push: { nodes:  req.body.nodeID }},
+                { upsert: true } , function(err,updatedUser){
+                    if(err)
+                        console.log(err);
+                    //Make a new Boiler document 
+                    Boiler.findOne({ nodeID:  nodeID })
+                    .then(boiler => {
+                       
+                            const newBoiler = new Boiler({
+                                nodeID,
+                                userID
+                            })
+                            newBoiler.save()
+                    })
+                                         
+                    req.flash('success_msg_add_node',`You've successfully added ${req.body.nodeID} to your nodes`)
+                    res.redirect('/main')
+                 });
+
+
+        }
+
+
+     })}
+
+ 
+})
+
+//Dashboard handle
+
+router.get('/dashboard/:x',(req,res)=>{
+    var x = req.params.x
+    res.render('dashboard',{
+    name: req.user.name,
+    email: req.user.email,
+    nodes: req.user.nodes,
+    x: x
+
+
+    })
+    console.log()
 })
 
 // Logout Handle 
@@ -95,4 +180,7 @@ router.get('/logout',(req,res)=>{
     req.flash('success_msg','You are logged out');
     res.redirect('/users/login')
 })
+
+
+
 module.exports = router;
