@@ -1,0 +1,28 @@
+<h1 class="mt-4">Home</h1>
+<p class="lead mb-3">Welcome <%= name %> </p>
+<a href="/users/addnode" class="btn btn-primary">Add a boiler</a>
+<a href="/users/editnode" class="btn btn-primary">Edit an existing boiler</a><br><br>
+<%- include('./partials/messages.ejs') %>
+<br><br>
+<table class="table">
+    <thead>
+      <tr>
+        <th scope="col">Boiler ID</th>
+        <th scope="col">Dashboard</th>
+        <th scope="col">Edit</th>
+      </tr>
+    </thead>
+     <% nodes.forEach(node=>{ %>
+    <tbody>
+      <tr>
+        <th scope="row"> <%= node; %></th>
+        <td><a href="/users/dashboard/<%=node%>" id='<%=node%>'   class="btn btn-primary"   > Dashboard</a></td>
+        <td></td>
+       </tr>
+    </tbody>
+ <%  }); %>
+
+
+
+  </table>
+<a href="/users/logout" class="btn btn-secondary">Logout</a>
