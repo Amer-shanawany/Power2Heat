@@ -1,8 +1,6 @@
     module.exports = {
 
-      //  MongoURI: 'mongodb://root:secret@88.99.186.143:27017/'
-              MongoURI: 'mongodb://192.168.1.39:27017/'
-
+        MongoURI: 'mongodb://root:secret@88.99.186.143:27017/'
     }
 
     // db.createCollection("db",{
