@@ -22,7 +22,7 @@ services:
     image: eclipse-mosquitto
     container_name: P2H_mosquitto
     restart: always
-    #volumes:
+    volumes:
     #  - "./mosquitto/config:/mosquitto/config"
     #  - "./mosquitto/data:/mosquitto/data"
     #  - "./mosquitto/log:/mosquitto/log"

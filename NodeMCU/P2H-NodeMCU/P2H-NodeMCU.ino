@@ -1,33 +1,51 @@
+#include "config.h"
+const String topic = BOILERID; //
 
-const char* WifiSSID     = "meeplemaker"; // WifiSSID
-const char* WifiPassword = "turboturbo"; // WifiPassword
+//Interval
+const long dataInterval = 600; // om de 10 minuten wordt de data geupdatet
+const long sensorInterval = 10; // om de 10 sec worden de sensoren uitgelezen
 
-const String boilerID = "ZFBBTKRG"; // HZPHRJBY
+//Boiler variables
+float boilerQ; // Q of the boiler
+const float boilerWindow = 1.0; // window vermijdt het constant aan en uitschakel van de boiler
+float boilerDesiredTemp = 70.0; //
+
+//Data
 long data_timestamp = 0;
-boolean data_connected = false;
-uint16_t data_charge = 0; //
-boolean data_powered = false;
+float data_charge = 0.0; //in % minTemp = 0% // maxTemp = 100%
+float data_volume = 0.0; // in l
+float data_temp = 68.83; // in °C - use 68.83° to simulate 
+boolean data_power = false;
 
 //Constants
 const uint16_t CPWater = 4190; //soortelijke warmtecapactiteit water 
 const uint16_t CPRVS = 500; //soortelijke warmtecapaciteit RVS
 
 //Sensors
-double tempIn = 10.7; //aantal graden aan de ingang
-double tempOut;
-double usedVolume = 0.78; //het water dat gebruikt is 
+float tempIn = 15.0; //aantal graden aan de ingang
+float tempOut;
+float usedVolume = 0.0; //het water dat gebruikt is 
 
 //Settings
 uint16_t settings_volume = 120; //volume van de boiler
-uint16_t settings_wattage = 32000; //wattage van de boiler
-uint8_t settings_temp = 65; //max of gewenste temperatuur van de boiler
+uint16_t settings_wattage = 3200; //wattage van de boiler
+float settings_minTemp = 60.0; //min temperatuur van de boiler
+float settings_maxTemp = 90.0; //max temperatuur van de boiler
+float settings_desiredTemp = 70.0; //gewenste temperatuur van de boiler
 
 //Commands;
-long commands_timestamp; //poweruptime
-boolean commands_power; //true when powered!!!
+boolean commands_P2H = false; //true when powered!!!
+
+//Time
+long prevDataTime;
+long prevSensorTime;
+long myTime;
 
 //JSON
 #include <ArduinoJson.h>
+
+//WIRE-I2C
+#include <Wire.h>
 
 //NTP
 #include <NTPClient.h>
@@ -42,16 +60,19 @@ long currentTime;
 //MQTT
 #include "EspMQTTClient.h"
 
+#undef  MQTT_MAX_PACKET_SIZE // un-define max packet size
+#define MQTT_MAX_PACKET_SIZE 256  // fix for MQTT client dropping messages over 128B
+
 EspMQTTClient client(
-  WifiSSID,       // WifiSSID
-  WifiPassword,   // WifiPassword
-  //  "88.99.186.143");  // MQTT Broker server ip
-  "192.168.1.43");  // MQTT Broker server ip
-//  "MQTTUsername",   // Can be omitted if not needed
-//  "MQTTPassword",   // Can be omitted if not needed
-//  "TestClient",     // Client name that uniquely identify your device
-//  1883              // The MQTT port, default to 1883. this line can be omitted
-// );
+  WIFISSID,         // WifiSSID
+  WIFIPASSWORD,     // WifiPassword
+  //88.99.186.143"; // MQTT Broker server ip
+  "192.168.1.43",  // MQTT Broker server ip
+  "",               // MQTTUsername - Can be omitted if not needed
+  "",               // MQTTPassword - Can be omitted if not needed
+  BOILERID,     // Client name that uniquely identify your device
+  1883              // The MQTT port, default to 1883. this line can be omitted
+  );
 
 void setup() {
   Serial.begin(115200);
@@ -59,122 +80,176 @@ void setup() {
 
   //setup pins
   pinMode(D0, OUTPUT);
+  pinMode(A0, INPUT);
   digitalWrite(D0, LOW);
   
   //NTP
-  WiFi.begin(WifiSSID, WifiPassword);
-  while ( WiFi.status() != WL_CONNECTED ) {
-    delay ( 500 );
-    Serial.print ( "." );
+  WiFi.begin(WIFISSID, WIFIPASSWORD);
+  while (WiFi.status() != WL_CONNECTED ) {
+    delay (500);
+    Serial.print (".");
   }
   timeClient.begin();
   timeClient.update();
+  myTime = timeClient.getEpochTime();
+  prevSensorTime = myTime;
+  prevDataTime = myTime;
 
   // Optional functionalities of EspMQTTClient :
   client.enableDebuggingMessages(); // Enable debugging messages sent to serial output
   client.enableHTTPWebUpdater(); // Enable the web updater. User and password default to values of MQTTUsername and MQTTPassword. These can be overrited with enableHTTPWebUpdater("user", "password").
+  
+  // Enable I2C
+  Wire.begin();
 }
 
 // This function is called once everything is connected (Wifi and MQTT)
 // WARNING : YOU MUST IMPLEMENT IT IF YOU USE EspMQTTClient
 void onConnectionEstablished()
 {
-  publishBoilerData();
+  publishData();
 
   // Subscribe to "P2H/___/settings" and display received message to Serial
-  client.subscribe("P2H/"+boilerID+"/settings", [](const String & payload) {
-    const size_t capacity = JSON_OBJECT_SIZE(3) + 20;
+  client.subscribe("P2H/"+topic+"/settings", [](const String & payload) {
+    const size_t capacity = JSON_OBJECT_SIZE(5) + 50;
     DynamicJsonDocument doc(capacity);
     deserializeJson(doc, payload);
     settings_volume = doc["volume"]; // 500
     settings_wattage = doc["wattage"];
-    settings_temp = doc["temp"]; // 90
+    settings_minTemp = doc["mintemp"]; // 90
+    settings_maxTemp = doc["maxtemp"]; // 90
+    settings_desiredTemp = doc["desiredtemp"]; // 70
     Serial.println("Boiler volume set to "+String(settings_volume)+"l");
     Serial.println("Boiler wattage set to "+String(settings_wattage)+"W");
-    Serial.println("Boiler maximum temperature set to "+String(settings_temp)+"°");
+    Serial.println("Boiler minimum temperature set to "+String(settings_minTemp)+"°");
+    Serial.println("Boiler maximum temperature set to "+String(settings_maxTemp)+"°");
+    Serial.println("Boiler desired temperature set to "+String(settings_desiredTemp)+"°");
+    boilerDesiredTemp = settings_desiredTemp;
   });
 
   // Subscribe to "P2H/___/commands" and display received message to Serial
-  client.subscribe("P2H/"+boilerID+"/commands", [](const String & payload) {
-    const size_t capacity = JSON_OBJECT_SIZE(2) + 20;
+  client.subscribe("P2H/"+topic+"/commands", [](const String & payload) {
+    const size_t capacity = JSON_OBJECT_SIZE(1) + 20;
     DynamicJsonDocument doc(capacity);
     deserializeJson(doc, payload);
-    commands_timestamp = doc["timestamp"]; // 1587129806355
-    commands_power = doc["power"]; // true
-    if (commands_power) {
-      Serial.println("The boiler will power up at "+String(commands_timestamp)+".");
+    commands_P2H = doc["P2H"]; // true
+    if (commands_P2H) {
+      boilerDesiredTemp = settings_maxTemp;
+    } else {
+      boilerDesiredTemp = settings_desiredTemp;
     }
   });
 }
 
 void loop()
-{
+{  
   client.loop();
-  currentTime = timeClient.getEpochTime();
-  //Serial.println(currentTime);
-  //Serial.println(chargeTime());
-  if (commands_power) {
-    if (currentTime >= commands_timestamp){
-      long counter = commands_timestamp + chargingTime() - currentTime;
-      if (counter > 0) {
-        Serial.print("The boiler will power down in "),
-        Serial.print(counter);
-        Serial.println(" seconds.");
-      }
-      if (currentTime < commands_timestamp + chargingTime() && !data_powered){
+  
+  myTime = timeClient.getEpochTime();
+  
+  if (myTime >= prevSensorTime + sensorInterval) { // check usedVolume
+    //SIMULATIE AFKOELING
+    data_temp *= 0.9999;
+
+    // Als de boiler aanstaat gaat de temperatuur volgens berekening omhoog
+    if (data_power) {
+      data_temp += tempRise(myTime-prevSensorTime);
+    }
+    
+    prevSensorTime = timeClient.getEpochTime();
+    
+    //get data from sensors
+    Wire.requestFrom(8,8);
+    String payload = "";
+    while (Wire.available()) {
+      payload += (char)Wire.read();
+    }
+    usedVolume = payload.toFloat();
+    //Serial.println(usedVolume);
+
+    if (usedVolume > 0) { // Als er water verbruikt is kunnen we een exacte meting van de boiler doen
+      tempOut = getTempOut();
+      data_temp = (tempOut*((1.0*settings_volume)-usedVolume)+(tempIn*usedVolume))/settings_volume; // Temp updaten met instromende water
+      data_volume += usedVolume; // Verbruikte water bijhouden
+    }
+
+    // Check of de boiler moet aan of uitstaan
+    if ((data_temp + boilerWindow) < boilerDesiredTemp) {
+      if (!data_power) {
         powerOn();
-      } else if (currentTime >= commands_timestamp + chargingTime() && data_powered) {
+      }
+    } else if (data_temp >= boilerDesiredTemp) {
+      if (data_power) {
         powerOff();
       }
-    }   
+    }
+
+    Serial.print("Boiler temperature: ");
+    Serial.print(data_temp, 4);
+    Serial.println("°C.");
   }
-  delay(1000);
+
+  if (myTime >= prevDataTime + dataInterval) {
+    publishData();
+  }
+
 }
 
-void publishBoilerData() {
+void publishData() {
+  prevDataTime = timeClient.getEpochTime();
+  data_timestamp = prevDataTime;
+  data_charge = percentage();
+
   //initialize JSON
-  const size_t capacity = JSON_OBJECT_SIZE(2) + JSON_OBJECT_SIZE(4) + 70;
+  const size_t capacity = JSON_OBJECT_SIZE(2) + JSON_OBJECT_SIZE(5) + 70;
   StaticJsonDocument<capacity> doc;
   
   JsonObject root = doc.to<JsonObject>();
-  root["boilerID"] = boilerID;
+  root["boilerID"] = BOILERID;
   JsonObject data = doc.createNestedObject("data");
   data["timestamp"] = data_timestamp;
-  data["connected"] = data_connected;
-  data["charge"] = data_charge;
-  data["powered"] = data_powered;
-
-  // Publish a message P2H/data when connected
-  //timeClient.update();
-  data["timestamp"] = timeClient.getEpochTime();
-  data["connected"] = true;
-
-  char buffer[512];
-  serializeJson(doc, buffer);
+  data["power"] = data_power;
+  data["charge"] = round(data_charge); //data_currentCharge;
+  data["temp"] = String(data_temp, 2).toFloat(); //data_currentTemp;
+  data["volume"] = String(data_volume, 2).toFloat(); //data_usedVolume;
+  
+  char buffer[256];
+  serializeJson(doc, buffer, 256);
   client.publish("P2H/data", buffer); // You can activate the retain flag by setting the third parameter to true
-}
 
-uint16_t getCharge()
-{
-  return 2000;
+  data_volume = 0.0; // verbruikte water terug op 0 zetten
 }
 
 void powerOn() {
-  data_powered = true;
+  data_power = true;
   digitalWrite(D0, HIGH);
-  publishBoilerData();  
+  publishData();  
 }
 
 void powerOff() {
-  data_powered = false;
+  data_power = false;
   digitalWrite(D0, LOW);
-  publishBoilerData();  
+  publishData();  
 }
 
-long chargingTime() {
-  double deltaT = settings_temp - tempIn;
-  usedVolume = min(usedVolume, double(settings_volume));
-  double Q = usedVolume*CPWater*deltaT;
-  double chargingTime = Q / (settings_wattage/1000);
-  return long(chargingTime);
+float getTempOut() {
+  float temp = analogRead(A0)/1024.0*settings_maxTemp; // 1024 instead of 1023
+  return temp;
+}
+
+float tempRise(long timeInterval) {
+  float temp = (1.0*timeInterval*settings_wattage)/(1.0*settings_volume*CPWater);
+  return temp;
+}
+
+float calcTemp() {
+  float temp = boilerQ/(settings_volume*settings_wattage);
+  return temp;
+}
+
+float percentage() {
+  float percentage = (data_temp-settings_minTemp)/(settings_maxTemp-settings_minTemp)*100.0;
+  percentage = max(percentage, (float)0.0); //
+  //Serial.println(percentage);
+  return percentage;
 }
