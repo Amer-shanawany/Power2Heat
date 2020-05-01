@@ -1,0 +1,62 @@
+# STEP1: build a docker image using docker build . -t my-node-red
+# STEP2: docker-compose up -d
+
+version: "3"
+services:
+  front-end:
+    build: ./Broker
+    container_name: front-end
+    ports:
+      - "80:80"
+    #volumes:
+    #   - "./Broker:./Broker/app"
+    restart: always
+  mongo:
+    image: mongo
+    container_name: P2H_mongo #give your container a name
+    restart: always
+    environment:
+      - MONGO_INITDB_DATABASE=power2heat #our database
+      - MONGO_INITDB_ROOT_USERNAME=root #set your container root username
+      - MONGO_INITDB_ROOT_PASSWORD=secret #set your container root password
+    volumes:
+      - ./init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
+      - ./mongo:/data/db
+    ports:
+      - "27017-27019:27017-27019"
+    networks:
+      - localnet
+  mosquitto:
+    image: eclipse-mosquitto
+    container_name: P2H_mosquitto
+    restart: always
+    #volumes:
+    #  - "./mosquitto/config:/mosquitto/config"
+    #  - "./mosquitto/data:/mosquitto/data"
+    #  - "./mosquitto/log:/mosquitto/log"
+    ports:
+      - "1883:1883"
+    #user: "0"
+    #user: ${CURRENT_UID}
+    networks:
+      - localnet
+  node-red:
+    depends_on:
+      - mosquitto #use "mosquitto" as the mqtt-addres in node-red
+      - mongo #use "mongo" as the mongo-address in node-red
+    build: ./MQTT
+    container_name: P2H_node-red
+    restart: always
+    volumes:
+      - "./node-red:/data"
+    ports:
+      - "1880:1880"
+    user: "0"
+    #user: ${CURRENT_UID}
+    networks:
+      - localnet
+
+networks:
+  localnet:
+    driver: bridge
+
