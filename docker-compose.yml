@@ -5,7 +5,7 @@ version: "3"
 services:
   front-end:
     build: ./Broker
-    container_name: front-end
+    container_name: P2H_front-end
     ports:
       - "80:80"
     #volumes:
@@ -13,15 +13,15 @@ services:
     restart: always
   mongo:
     image: mongo
-    container_name: P2H_mongo #give your container a name
+    container_name: P2H_mongo
     restart: always
     environment:
       - MONGO_INITDB_DATABASE=power2heat #our database
       - MONGO_INITDB_ROOT_USERNAME=root #set your container root username
       - MONGO_INITDB_ROOT_PASSWORD=secret #set your container root password
     volumes:
-      - ./init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
-      - ./mongo:/data/db
+      - ./MQTT/init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
+      - ./MQTT/mongo:/data/db
     ports:
       - "27017-27019:27017-27019"
     networks:
@@ -48,7 +48,7 @@ services:
     container_name: P2H_node-red
     restart: always
     volumes:
-      - "./node-red:/data"
+      - "./MQTT/node-red:/data"
     ports:
       - "1880:1880"
     user: "0"
