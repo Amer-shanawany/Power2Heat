@@ -1,5 +1,6 @@
-    module.exports = {
-
+module.exports = {
+  MongoURI: "mongodb://root:secret@88.99.186.143:27017/power2heat",
+};
         MongoURI: 'mongodb://root:secret@127.0.0.1:27017/'
     }
 

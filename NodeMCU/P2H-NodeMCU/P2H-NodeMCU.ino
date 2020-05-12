@@ -66,13 +66,13 @@ long currentTime;
 EspMQTTClient client(
   WIFISSID,         // WifiSSID
   WIFIPASSWORD,     // WifiPassword
-  //88.99.186.143"; // MQTT Broker server ip
-  "192.168.1.43",  // MQTT Broker server ip
-  "",               // MQTTUsername - Can be omitted if not needed
-  "",               // MQTTPassword - Can be omitted if not needed
-  BOILERID,     // Client name that uniquely identify your device
-  1883              // The MQTT port, default to 1883. this line can be omitted
-  );
+  MQTTServer);//; // MQTT Broker server ip
+  //"192.168.1.43",  // MQTT Broker server ip
+ // "",               // MQTTUsername - Can be omitted if not needed
+ // "",               // MQTTPassword - Can be omitted if not needed
+ // BOILERID,     // Client name that uniquely identify your device
+  //1883              // The MQTT port, default to 1883. this line can be omitted
+ // );
 
 void setup() {
   Serial.begin(115200);
