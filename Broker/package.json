@@ -5,6 +5,7 @@
   "main": "app.js",
   "dependencies": {
     "bcryptjs": "^2.4.3",
+    "body-parser": "^1.19.0",
     "broker": "^1.0.1",
     "canvas": "^2.6.1",
     "chart.js": "^2.9.3",
@@ -14,13 +15,14 @@
     "express": "^4.17.1",
     "express-ejs-layouts": "^2.5.0",
     "express-session": "^1.17.1",
-    "mongoose": "^5.9.11",
+    "mongoose": "^5.9.13",
     "mosca": "^2.8.3",
     "mqtt": "^4.0.0",
     "node-gyp": "^6.1.0",
     "npm": "^6.14.4",
     "passport": "^0.4.1",
     "passport-local": "^1.0.0",
+    "typedarray-to-buffer": "^3.1.5",
     "zingchart": "^2.9.0"
   },
   "devDependencies": {
