@@ -21,7 +21,6 @@ router.get("/login", (req, res) => res.render("login"));
 router.get("/register", (req, res) => res.render("register"));
 //Register Handle
 router.post("/register", (req, res) => {
-  console.log(req.body);
   const { name, email, password, password2 } = req.body;
   let errors = [];
 
@@ -159,11 +158,10 @@ router.post("/addnode", (req, res) => {
   }
 });
 
+
 //Dashboard handle
-
+//TODO: Limit number of data unit
 const Boilerdata = require("../models/Boilerdata");
-
-const ejs = require("ejs");
 router.get("/dashboard/:x", (req, res) => {
   var boilerID = req.params.x;
   var timestamps = [];
@@ -180,7 +178,7 @@ router.get("/dashboard/:x", (req, res) => {
       charges.push(parseInt(element.data.charge));
       volumes.push(parseInt(element.data.volume));
       temps.push(parseFloat(element.data.temp));
-      console.log(parseInt(element.data.charge));
+      //console.log(parseInt(element.data.charge));
 
       tempDate = new Date(parseInt(element.data.timestamp));
       tempMinutes = tempDate.getMinutes();
@@ -219,6 +217,99 @@ router.get("/dashboard/:x", (req, res) => {
 
  */
 //res.sendFile(__dirname + "/test.html");
+
+function sortByProperty(property) {
+  return function (a, b) {
+    if (a[property] > b[property])
+      return 1;
+    else if (a[property] < b[property])
+      return -1;
+
+    return 0;
+  }
+}
+
+
+
+// User's Profile Handle
+router.get("/profile/:id", (req, res) => {
+  //Get NODE Profile 
+  // Profile.findOne({ id: req.params.id })
+  let profiles = [];
+  Profile.findOne({ id: req.params.id }).then(profileResult => {
+    if (profileResult) {
+      profiles = profileResult.profiles.sort(sortByProperty("time"))
+      publish(`P2H/${req.params.id}/profile`, JSON.stringify(profiles).toString())
+
+    }
+    res.render("profile", {
+      id: req.params.id,
+      profiles: profiles
+    })
+
+  }, notfulfiled => {
+    res.render("profile", {
+      id: req.params.id,
+
+    })
+  })
+})
+
+//POST User's profile
+var toBuffer = require('typedarray-to-buffer')
+
+const publish = require('../pub')
+const Profile = require('../models/Profile');
+const Broker = require('../borker')
+router.post("/profile/:id", (req, res) => {
+  let profiles;
+  //const client = Broker(req.params.id)
+  //console.log(req.body)
+  let time = parseInt(req.body.day * 24 * 60) + parseInt(req.body.hour * 60) + parseInt(req.body.minute);
+  Profile.findOneAndUpdate(
+    { id: req.params.id },
+    { $push: { profiles: { time: time, temp: req.body.temperature } } },
+    { upsert: true },
+    function (err, updatedProfile, res) {
+      if (err) console.log(err);
+      if (updatedProfile) {
+
+
+      }
+    })
+
+  return res.redirect(301, `/users/profile/${req.params.id}`)
+
+  // .then(() => {
+
+  //   // Profile.find({ id: req.params.id }).then(profileResult => {
+
+  //   //   //console.log(JSON.stringify(profileResult))
+
+  //   //   var arr = new Uint8Array(profileResult)
+  //   //   arr = toBuffer(arr)
+
+  //   //   publish(`P2H/${req.params.id}/profile`, JSON.stringify(profileResult).toString())
+  //   //   res.redirect(301, `/users/profile/${req.params.id}`)
+
+  //   // })
+
+  // });
+
+
+
+  //res.end(JSON.stringify(req.body))
+  //JSON profiles Example
+  /***
+   * 
+   *  {"profiles":[{"time":1430,"temp":66},
+   *             {"time":1630,"temp":68},
+   *            {"time":3507,"temp":80}
+   *           ]}
+   * 
+   *  */
+})
+
 
 // Logout Handle
 router.get("/logout", (req, res) => {

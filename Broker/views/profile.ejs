@@ -1,0 +1,125 @@
+<div class="row mt-5">
+
+    <h1 class="mt-4">User's Weekly Profile</h1>
+    <br><br>
+    <table class="table">
+        <thead>
+            <tr>
+                <th scope="col">Day</th>
+                <th scope="col">Hour</th>
+                <th scope="col">Minute</th>
+                <th scope="col">Desired Temperature</th>
+                <th scope="col"></th>
+            </tr>
+        </thead>
+
+        <tbody>
+
+
+            <form class="form" action="/users/profile/<%=id%>" method="POST">
+
+                <tr>
+
+                    <td>
+                        <select name="day" class="custom-select my-1 mr-sm-2" id="inlineFormCustomSelectPref">
+
+                            <option value="0">Sunday</option>
+                            <option value="1">Monday</option>
+                            <option value="2">Tuesday</option>
+                            <option value="3">Wednesday</option>
+                            <option value="4">Thursday</option>
+                            <option value="5">Friday</option>
+                            <option value="6">Saturday</option>
+                        </select>
+                    </td>
+                    <td>
+                        <select name="hour" class="custom-select my-1 mr-sm-2" id="inlineFormCustomSelectPref">
+
+                            <% for(var hour=0; hour<24;hour++){%>
+                            <option value="<%=hour%>"><%=hour%></option>
+                            <%}%>
+                            
+                        </select>
+                    </td>
+                    <td>
+                        <select name="minute" class="custom-select my-1 mr-sm-2" id="inlineFormCustomSelectPref">
+                            
+                            <% for(var minute=0; minute<60;minute++){%>
+                            <option value="<%=minute%>"><%=minute%></option>
+                            <%}%>
+                            
+                        </select>
+                    </td>
+                    <td>
+                        <input type="number" required   class="form-control my-1" name="temperature" aria-label="Temperature (degree celsius)" min="60" max="90">
+                    </td>
+                    <td>
+                        <button type="submit" class="btn btn-primary my-1">Submit</button>
+                    </td>
+                </tr>
+
+            </form>
+
+            <% if (profiles) { %>
+
+                            <% profiles.forEach(profile=>{%>
+                <tr>
+
+                    <td>
+                        <% let day = (profile.time - (profile.time%60) - (((( profile.time - (profile.time%60) )/ 60 )% 24)) *60) /1440; %>
+                        <% let dayValue %>
+                        <% switch (day) {
+                            case 0:
+                                dayValue = "Sunday"
+                                break;
+                                case 1:
+                                dayValue = "Monday"
+                                break;
+                                case 2:
+                                dayValue = "Tuesday"
+                                break;
+                                case 3:
+                                dayValue = "Wedensday"
+                                break;
+                                case 4:
+                                dayValue = "Thursday"
+                                break;
+                                case 5:
+                                dayValue = "Friday"
+                                break;
+                                case 6:
+                                dayValue = "Saturday"
+                                break;
+                        }    %>
+                        <%= dayValue %>
+                    </td>
+                    <td>
+                        <%= ((( profile.time - (profile.time%60) )/ 60 )% 24); %>
+                    </td>
+                    <td>
+                        <%=  (profile.time%60) ; %>
+                    </td>
+                    <td>
+                        <%=  (profile.temp) ; %>°C
+                    </td>
+
+                </tr>
+                <%});%>
+                <% } %>
+
+
+
+        </tbody>
+
+
+
+
+
+
+
+
+
+
+
+
+</div>
