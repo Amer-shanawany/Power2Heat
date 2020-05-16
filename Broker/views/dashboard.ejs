@@ -1,3 +1,65 @@
-to be implemented
+<div class="row mt-5">
 
-<%= x %>
+<h1 class="mt-4">Dashboard Node ID: <%=boilerID%></h1>
+<link rel="stylesheet" href="./css/layout.css" />
+<link
+  rel="stylesheet"
+  href="http://cdn.jsdelivr.net/chartist.js/latest/chartist.min.css"
+/>
+<script src="http://cdn.jsdelivr.net/chartist.js/latest/chartist.min.js"></script>
+<br /><br />
+
+<div
+  style="height: 200px; stroke: green;"
+  class="ct-chart1 ct-golden-section"
+  id="ct-line1"
+></div>
+<p class="lead mb-3">Temperature °C</p>
+<div style="height: 200px;" class="ct-chart2 ct-golden-section"></div>
+<p class="lead mb-3">Charge %</p>
+
+<div style="height: 200px;" class="ct-chart3 ct-golden-section"></div>
+<p>Volumes - Litre</p>
+
+<script>
+
+
+     Chartist.Line(
+      ".ct-chart1",
+      {
+        labels: [<%= resTime %>],
+        series: [[<%= temps %>]],
+      },
+      {
+        width: "1200px",
+        height: "200px",
+      }
+  );
+</script>
+<script>
+  Chartist.Line(
+    ".ct-chart2",
+    {
+      labels: [<%= resTime %>],
+      series: [[<%= charges %>]],
+    },
+    {
+      width: "1200px",
+      height: "200px",
+    }
+  );
+</script>
+<script>
+  new Chartist.Line(
+      ".ct-chart3",
+      {
+        labels: [<%= resTime %>],
+        series: [[<%= volumes %>]],
+      },
+      {
+        width: "1200px",
+        height: "200px",
+      }
+    );
+</script>
+</div>

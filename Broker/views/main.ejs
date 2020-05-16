@@ -1,3 +1,4 @@
+<br />
 <h1 class="mt-4">Home</h1>
 <p class="lead mb-3">Welcome <%= name %> </p>
 <a href="/users/addnode" class="btn btn-primary">Add a boiler</a>
@@ -5,24 +6,24 @@
 <%- include('./partials/messages.ejs') %>
 <br><br>
 <table class="table">
-    <thead>
-      <tr>
-        <th scope="col">Boiler ID</th>
-        <th scope="col">Dashboard</th>
-        <th scope="col">Edit</th>
-      </tr>
-    </thead>
-     <% nodes.forEach(node=>{ %>
-    <tbody>
-      <tr>
-        <th scope="row"> <%= node; %></th>
-        <td><a href="/users/dashboard/<%=node%>" id='<%=node%>'   class="btn btn-primary"   > Dashboard</a></td>
-        <td></td>
-       </tr>
-    </tbody>
- <%  }); %>
+  <thead>
+    <tr>
+      <th scope="col">Boiler ID</th>
+      <th scope="col">Dashboard</th>
+      <th scope="col">Weekly profile</th>
+    </tr>
+  </thead>
+  <% nodes.forEach(node=>{ %>
+  <tbody>
+    <tr>
+      <th scope="row"> <%= node; %></th>
+      <td><a href="/users/dashboard/<%=node%>" id='<%=node%>' class="btn btn-primary"> Dashboard</a></td>
+      <td><a href="/users/profile/<%=node;%>" id='<%=node%>' class="btn btn-primary"> Edit </a></td>
+    </tr>
+  </tbody>
+  <%  }); %>
 
 
 
-  </table>
+</table>
 <a href="/users/logout" class="btn btn-secondary">Logout</a>

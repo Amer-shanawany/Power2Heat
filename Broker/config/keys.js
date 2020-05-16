@@ -1,7 +1,8 @@
-    module.exports = {
-
-        MongoURI: 'mongodb://root:secret@127.0.0.1:27017/'
-    }
+module.exports = {
+  MongoURI: "mongodb://root:secret@88.99.186.143:27017/power2heat",
+};
+        //MongoURI: 'mongodb://root:secret@127.0.0.1:27017/'
+    
 
     // db.createCollection("db",{
     //     capped: false,
