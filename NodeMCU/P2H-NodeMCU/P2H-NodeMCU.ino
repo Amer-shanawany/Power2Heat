@@ -39,7 +39,9 @@ typedef struct TimeTemp{
     uint8_t temp;
 } TimeTemp_t;
 
-TimeTemp_t myProfile[14] = {{0, 70}, {10080, 70}, {10080, 70}, {10080, 70}, {10080, 70}, {10080, 70}, {10080, 70}, {10080, 70}, {10080, 70}, {10080, 70}, {10080, 70}, {10080, 70}, {10080, 70}, {10080, 70}};
+const uint8_t profileSize = 50;
+//TimeTemp_t myProfile[profileSize] = {{0, 70}, {10080, 70}, {10080, 70}, {10080, 70}, {10080, 70}, {10080, 70}, {10080, 70}, {10080, 70}, {10080, 70}, {10080, 70}, {10080, 70}, {10080, 70}, {10080, 70}, {10080, 70}, {10080, 70}, {10080, 70}, {10080, 70}, {10080, 70}, {10080, 70}, {10080, 70}, {10080, 70}};
+TimeTemp_t myProfile[profileSize];
 uint16_t timeCode = 0;
 
 //Commands;
@@ -108,6 +110,14 @@ void setup() {
   
   // Enable I2C
   Wire.begin();
+
+  // Setup de default user profile
+  myProfile[0].time=0;
+  myProfile[0].temp=settings_minTemp;
+  for (int i = 1; i < profileSize; i++) {
+    myProfile[i].time=10080;
+    myProfile[i].temp=settings_minTemp;
+  }
 }
 
 // This function is called once everything is connected (Wifi and MQTT)
@@ -118,7 +128,7 @@ void onConnectionEstablished()
   
   // Subscribe to "P2H/___/profile" and display received message to Serial
   client.subscribe("P2H/"+topic+"/profile", [](const String & payload) {
-    const size_t capacity = JSON_ARRAY_SIZE(14) + 14*JSON_OBJECT_SIZE(3) + 610;
+    const size_t capacity = JSON_ARRAY_SIZE(50) + 50*JSON_OBJECT_SIZE(2) + 560;
     DynamicJsonDocument doc(capacity);
     deserializeJson(doc, payload);
 
@@ -175,7 +185,7 @@ void loop()
     } else {
       timeCode = timeClient.getDay()*1440+timeClient.getHours()*60+timeClient.getMinutes();
       // loop through the profile
-      for (int i = 0; i < 21; i++) {
+      for (int i = 0; i < profileSize; i++) {
         if (timeCode >= myProfile[i].time && myProfile[i].time < 10080) { //
           boilerDesiredTemp = myProfile[i].temp;
         }
