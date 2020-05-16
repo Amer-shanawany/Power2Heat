@@ -14,21 +14,17 @@ float boilerDesiredTemp = 70.0; //
 long data_timestamp = 0;
 float data_charge = 0.0; //in % minTemp = 0% // maxTemp = 100%
 float data_volume = 0.0; // in l
-<<<<<<< HEAD
 float data_temp = 70.0; // in °C - use 68.83° to simulate 
-=======
-float data_temp = 68.83; // in °C - use 68.83° to simulate
->>>>>>> 558b5efb9a559444e114022e8a907187431f17a2
 boolean data_power = false;
 
 //Constants
-const uint16_t CPWater = 4190; //soortelijke warmtecapactiteit water
+const uint16_t CPWater = 4190; //soortelijke warmtecapactiteit water 
 const uint16_t CPRVS = 500; //soortelijke warmtecapaciteit RVS
 
 //Sensors
 float tempIn = 15.0; //aantal graden aan de ingang
 float tempOut;
-float usedVolume = 0.0; //het water dat gebruikt is
+float usedVolume = 0.0; //het water dat gebruikt is 
 
 //Settings
 uint16_t settings_volume = 120; //volume van de boiler
@@ -38,12 +34,12 @@ float settings_maxTemp = 90.0; //max temperatuur van de boiler
 //float settings_desiredTemp = 70.0; //gewenste temperatuur van de boiler
 
 //Profile
-typedef struct DFHSQFGKSQHJG{
+typedef struct TimeTemp{
     uint16_t time;
     uint8_t temp;
 } TimeTemp_t;
 
-TimeTemp_t myProfile[21] = {{0, 70}, {10080, 70}, {10080, 70}, {10080, 70}, {10080, 70}, {10080, 70}, {10080, 70}, {10080, 70}, {10080, 70}, {10080, 70}, {10080, 70}, {10080, 70}, {10080, 70}, {10080, 70}, {10080, 70}, {10080, 70}, {10080, 70}, {10080, 70}, {10080, 70}, {10080, 70}, {10080, 70}};
+TimeTemp_t myProfile[14] = {{0, 70}, {10080, 70}, {10080, 70}, {10080, 70}, {10080, 70}, {10080, 70}, {10080, 70}, {10080, 70}, {10080, 70}, {10080, 70}, {10080, 70}, {10080, 70}, {10080, 70}, {10080, 70}};
 uint16_t timeCode = 0;
 
 //Commands;
@@ -71,13 +67,12 @@ NTPClient timeClient(ntpUDP, "pool.ntp.org", utcOffsetInSeconds);
 long currentTime;
 
 //MQTT
-// !!! change MQTT_MAX_PACKET_SIZE 512 in PubSubClient.h
+// !!! change MQTT_MAX_PACKET_SIZE 1024 in PubSubClient.h
 #include "EspMQTTClient.h"
 
 EspMQTTClient client(
   WIFISSID,         // WifiSSID
   WIFIPASSWORD,     // WifiPassword
-<<<<<<< HEAD
   "88.99.186.143", // MQTT Broker server ip
   //"192.168.1.43",  // MQTT Broker server ip
   "",               // MQTTUsername - Can be omitted if not needed
@@ -85,15 +80,6 @@ EspMQTTClient client(
   BOILERID,     // Client name that uniquely identify your device
   1883              // The MQTT port, default to 1883. this line can be omitted
   );
-=======
-  MQTTServer);//; // MQTT Broker server ip
-//"192.168.1.43",  // MQTT Broker server ip
-// "",               // MQTTUsername - Can be omitted if not needed
-// "",               // MQTTPassword - Can be omitted if not needed
-// BOILERID,     // Client name that uniquely identify your device
-//1883              // The MQTT port, default to 1883. this line can be omitted
-// );
->>>>>>> 558b5efb9a559444e114022e8a907187431f17a2
 
 void setup() {
   Serial.begin(115200);
@@ -103,7 +89,7 @@ void setup() {
   pinMode(D0, OUTPUT);
   pinMode(A0, INPUT);
   digitalWrite(D0, LOW);
-
+  
   //NTP
   WiFi.begin(WIFISSID, WIFIPASSWORD);
   while (WiFi.status() != WL_CONNECTED ) {
@@ -119,7 +105,7 @@ void setup() {
   // Optional functionalities of EspMQTTClient :
   client.enableDebuggingMessages(); // Enable debugging messages sent to serial output
   client.enableHTTPWebUpdater(); // Enable the web updater. User and password default to values of MQTTUsername and MQTTPassword. These can be overrited with enableHTTPWebUpdater("user", "password").
-
+  
   // Enable I2C
   Wire.begin();
 }
@@ -129,47 +115,28 @@ void setup() {
 void onConnectionEstablished()
 {
   publishData();
-<<<<<<< HEAD
   
   // Subscribe to "P2H/___/profile" and display received message to Serial
   client.subscribe("P2H/"+topic+"/profile", [](const String & payload) {
-    const size_t capacity = 2*JSON_ARRAY_SIZE(21) + JSON_OBJECT_SIZE(2) + 20;
+    const size_t capacity = JSON_ARRAY_SIZE(14) + 14*JSON_OBJECT_SIZE(3) + 610;
     DynamicJsonDocument doc(capacity);
-    deserializeJson(doc, payload); // 10080
-    JsonArray time = doc["time"];
-    JsonArray temp = doc["temp"];
-    for (int i = 0; i < 21; i++) {
-      myProfile[i].time = time[i];
-      myProfile[i].temp = temp[i];
-    }
+    deserializeJson(doc, payload);
+
+    int size  = doc.size();
+
+    for (int i = 0; i < size; i++) {
+      JsonObject root = doc[i];
+      myProfile[i].time = root["time"];
+      myProfile[i].temp = root["temp"];
+    } 
+    
     Serial.println("Profile succesfully received.");
   });
-=======
-  //
-  //  // Subscribe to "P2H/___/settings" and display received message to Serial
-  //  client.subscribe("P2H/"+topic+"/settings", [](const String & payload) {
-  //    const size_t capacity = JSON_OBJECT_SIZE(5) + 50;
-  //    DynamicJsonDocument doc(capacity);
-  //    deserializeJson(doc, payload);
-  //    settings_volume = doc["volume"]; // 500
-  //    settings_wattage = doc["wattage"];
-  //    settings_minTemp = doc["mintemp"]; // 90
-  //    settings_maxTemp = doc["maxtemp"]; // 90
-  //    settings_desiredTemp = doc["desiredtemp"]; // 70
-  //    Serial.println("Boiler volume set to "+String(settings_volume)+"l");
-  //    Serial.println("Boiler wattage set to "+String(settings_wattage)+"W");
-  //    Serial.println("Boiler minimum temperature set to "+String(settings_minTemp)+"°");
-  //    Serial.println("Boiler maximum temperature set to "+String(settings_maxTemp)+"°");
-  //    Serial.println("Boiler desired temperature set to "+String(settings_desiredTemp)+"°");
-  //    boilerDesiredTemp = settings_desiredTemp;
-  //  });
->>>>>>> 558b5efb9a559444e114022e8a907187431f17a2
 
   // Subscribe to "P2H/___/settings" and display received message to Serial
-  client.subscribe("P2H/" + topic + "/test", [](const String & payload) {
+  client.subscribe("P2H/"+topic+"/settings", [](const String & payload) {
     const size_t capacity = JSON_OBJECT_SIZE(5) + 50;
     DynamicJsonDocument doc(capacity);
-<<<<<<< HEAD
     deserializeJson(doc, payload);
     settings_volume = doc["volume"]; // 500
     settings_wattage = doc["wattage"];
@@ -181,54 +148,23 @@ void onConnectionEstablished()
     Serial.println("Boiler minimum temperature set to "+String(settings_minTemp)+"°");
     Serial.println("Boiler maximum temperature set to "+String(settings_maxTemp)+"°");
     //Serial.println("Boiler desired temperature set to "+String(settings_desiredTemp)+"°");
-=======
-    DeserializationError err = deserializeJson(doc, payload);
-    if (err) {
-      Serial.print(F("deserializeJson() failed with code "));
-      Serial.println(err.c_str());
-    }
-    deserializeJson(doc, payload, DeserializationOption::NestingLimit(2));
-    settings_volume = doc[0]; // 500
-    JsonObject root = doc.to<JsonObject>();
-    Serial.println(root);
-    
-    JsonArray array = root.to<JsonArray>();
-     Serial.println(array);
-
-     Serial.println(array.getElement(0));
-     
-
-    //settings_wattage = doc["wattage"];
-    //settings_minTemp = doc["mintemp"]; // 90
-    //settings_maxTemp = doc["maxtemp"]; // 90
-    //settings_desiredTemp = doc["desiredtemp"]; // 70
-    Serial.println("Boiler volume set to " + String(settings_volume) + "l");
-    //Serial.println("Boiler wattage set to "+String(settings_wattage)+"W");
-    //Serial.println("Boiler minimum temperature set to "+String(settings_minTemp)+"°");
-    //Serial.println("Boiler maximum temperature set to "+String(settings_maxTemp)+"°");
-    //Serial.println("Boiler desired temperature set to "+String(settings_desiredTemp)+"°");
-    //boilerDesiredTemp = settings_desiredTemp;
-
->>>>>>> 558b5efb9a559444e114022e8a907187431f17a2
   });
 
   // Subscribe to "P2H/___/commands" and display received message to Serial
-  client.subscribe("P2H/" + topic + "/commands", [](const String & payload) {
+  client.subscribe("P2H/"+topic+"/commands", [](const String & payload) {
     const size_t capacity = JSON_OBJECT_SIZE(1) + 20;
     DynamicJsonDocument doc(capacity);
-    //StaticJsonDocument<200> doc;
-
     deserializeJson(doc, payload);
     commands_P2H = doc["P2H"]; // true or false
   });
 }
 
 void loop()
-{
+{  
   client.loop();
-
+  
   myTime = timeClient.getEpochTime();
-
+  
   if (myTime >= prevSensorTime + sensorInterval) { // check usedVolume
     //SIMULATIE AFKOELING
     data_temp *= 0.9999;
@@ -251,13 +187,13 @@ void loop()
 
     // Als de boiler aanstaat gaat de temperatuur volgens berekening omhoog
     if (data_power) {
-      data_temp += tempRise(myTime - prevSensorTime);
+      data_temp += tempRise(myTime-prevSensorTime);
     }
-
+    
     prevSensorTime = timeClient.getEpochTime();
-
+    
     //get data from sensors
-    Wire.requestFrom(8, 8);
+    Wire.requestFrom(8,8);
     String payload = "";
     while (Wire.available()) {
       payload += (char)Wire.read();
@@ -267,7 +203,7 @@ void loop()
 
     if (usedVolume > 0) { // Als er water verbruikt is kunnen we een exacte meting van de boiler doen
       tempOut = getTempOut();
-      data_temp = (tempOut * ((1.0 * settings_volume) - usedVolume) + (tempIn * usedVolume)) / settings_volume; // Temp updaten met instromende water
+      data_temp = (tempOut*((1.0*settings_volume)-usedVolume)+(tempIn*usedVolume))/settings_volume; // Temp updaten met instromende water
       data_volume += usedVolume; // Verbruikte water bijhouden
     }
 
@@ -301,7 +237,7 @@ void publishData() {
   //initialize JSON
   const size_t capacity = JSON_OBJECT_SIZE(2) + JSON_OBJECT_SIZE(5) + 70;
   StaticJsonDocument<capacity> doc;
-
+  
   JsonObject root = doc.to<JsonObject>();
   root["boilerID"] = BOILERID;
   JsonObject data = doc.createNestedObject("data");
@@ -310,7 +246,7 @@ void publishData() {
   data["charge"] = String(data_charge, 2).toFloat(); //data_currentCharge;
   data["temp"] = String(data_temp, 2).toFloat(); //data_currentTemp;
   data["volume"] = String(data_volume, 2).toFloat(); //data_usedVolume;
-
+  
   char buffer[256];
   serializeJson(doc, buffer, 256);
   client.publish("P2H/data", buffer); // You can activate the retain flag by setting the third parameter to true
@@ -321,32 +257,32 @@ void publishData() {
 void powerOn() {
   data_power = true;
   digitalWrite(D0, HIGH);
-  publishData();
+  publishData();  
 }
 
 void powerOff() {
   data_power = false;
   digitalWrite(D0, LOW);
-  publishData();
+  publishData();  
 }
 
 float getTempOut() {
-  float temp = analogRead(A0) / 1024.0 * settings_maxTemp; // 1024 instead of 1023
+  float temp = analogRead(A0)/1024.0*settings_maxTemp; // 1024 instead of 1023
   return temp;
 }
 
 float tempRise(long timeInterval) {
-  float temp = (1.0 * timeInterval * settings_wattage) / (1.0 * settings_volume * CPWater);
+  float temp = (1.0*timeInterval*settings_wattage)/(1.0*settings_volume*CPWater);
   return temp;
 }
 
 float calcTemp() {
-  float temp = boilerQ / (settings_volume * settings_wattage);
+  float temp = boilerQ/(settings_volume*settings_wattage);
   return temp;
 }
 
 float percentage() {
-  float percentage = (data_temp - settings_minTemp) / (settings_maxTemp - settings_minTemp) * 100.0;
+  float percentage = (data_temp-settings_minTemp)/(settings_maxTemp-settings_minTemp)*100.0;
   percentage = max(percentage, (float)0.0); //
   //Serial.println(percentage);
   return percentage;
