@@ -1,6 +1,6 @@
- #👿  
+#👿  
 
-FROM node:9-slim
+FROM node:12-slim
 WORKDIR /app
 ENV PORT=80
 COPY package.json /app
