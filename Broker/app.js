@@ -63,8 +63,17 @@ app.use((req, res, next) => {
 
 //Routes
 app.use("/", require("./routes/index"));
-app.use("/users", require("./routes/users"));
 
+// app.use("/users", require("./routes/users"));
+app.use("/users/register", require("./routes/register"));
+app.use("/users/login", require("./routes/login"));
+app.use("/users/addnode", require("./routes/addnode"));
+app.use("/users/dashboard", require("./routes/dashboard"))
+app.use("/users/profile", require("./routes/profile"))
+app.use("/users/logout", require("./routes/logout"))
+app.use("/users/settings", require("./routes/settings"))
+app.use("/users/remove", require("./routes/remove"))
+//404
 app.use(function (req, res, next) {
   res.status(404);
 

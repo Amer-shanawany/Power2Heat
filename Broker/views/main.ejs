@@ -2,7 +2,6 @@
 <h1 class="mt-4">Home</h1>
 <p class="lead mb-3">Welcome <%= name %> </p>
 <a href="/users/addnode" class="btn btn-primary">Add a boiler</a>
-<a href="/users/editnode" class="btn btn-primary">Edit an existing boiler</a><br><br>
 <%- include('./partials/messages.ejs') %>
 <br><br>
 <table class="table">
@@ -11,6 +10,8 @@
       <th scope="col">Boiler ID</th>
       <th scope="col">Dashboard</th>
       <th scope="col">Weekly profile</th>
+      <th scope="col">Edit Boiler Settings</th>
+      <th scope="col">Remove Boiler</th>
     </tr>
   </thead>
   <% nodes.forEach(node=>{ %>
@@ -19,6 +20,8 @@
       <th scope="row"> <%= node; %></th>
       <td><a href="/users/dashboard/<%=node%>" id='<%=node%>' class="btn btn-primary"> Dashboard</a></td>
       <td><a href="/users/profile/<%=node;%>" id='<%=node%>' class="btn btn-primary"> Edit </a></td>
+      <td><a href="/users/settings/<%=node;%>" id='<%=node%>' class="btn btn-primary">Edit</a></td>
+      <td><a href="/users/remove/<%=node;%>" id='<%=node%>' class="btn btn-primary">Remove</a></td>
     </tr>
   </tbody>
   <%  }); %>

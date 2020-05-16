@@ -1,0 +1,79 @@
+<div class="row mt-5">
+    <h1>Edit boiler settings</h1>
+    <table class="table">
+        <form class="form" action="/users/settings/<%=id%>" method="POST">
+
+            <tr>
+                <td>
+                    Volume <%=volume%> Litres
+
+                </td>
+                <td>
+
+                    <input type="number" required class="form-control my-1" name="volume"
+                        aria-label="Volume (Litres) min=" 10" max="350">
+
+                </td>
+            </tr>
+
+            <tr>
+                <td>
+                    Wattage <%=wattage%> Watts
+                </td>
+                <td>
+
+                    <input type="number" required class="form-control my-1" name="wattage" aria-label="Wattage (Watts)"
+                        min="10">
+
+                </td>
+            </tr>
+
+            <tr>
+                <td>
+                    Desired temperature <%=desiredtemp%> °C
+                </td>
+                <td>
+
+                    <input type="number" required class="form-control my-1" name="desired"
+                        aria-label="Desired Temperature (degree celsius)" min="10" max="90">
+
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    Min temperature <%=mintemp%> °C
+                </td>
+                <td>
+
+                    <input type="number" required class="form-control my-1" name="mintemp"
+                        aria-label="Temperature (degree celsius)" min="10" max="90">
+
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    Max temperature <%=maxtemp%> °C
+                </td>
+                <td>
+
+                    <input type="number" required class="form-control my-1" name="maxtemp"
+                        aria-label="Temperature (degree celsius)" min="10" max="90">
+
+                </td>
+            </tr>
+
+            <td>
+                <button type="submit" class="btn btn-primary my-1">Submit</button>
+            </td>
+            </tr>
+
+        </form>
+    </table>
+</div>
+
+<div class="row mt-5">
+    <a href="/main" class="btn btn-secondary my-1">Back</a>
+    <a href="/users/logout" class="btn btn-secondary my-1">Logout</a>
+
+
+</div>

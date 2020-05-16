@@ -109,56 +109,25 @@ void onConnectionEstablished()
 {
   publishData();
   //
-  //  // Subscribe to "P2H/___/settings" and display received message to Serial
-  //  client.subscribe("P2H/"+topic+"/settings", [](const String & payload) {
-  //    const size_t capacity = JSON_OBJECT_SIZE(5) + 50;
-  //    DynamicJsonDocument doc(capacity);
-  //    deserializeJson(doc, payload);
-  //    settings_volume = doc["volume"]; // 500
-  //    settings_wattage = doc["wattage"];
-  //    settings_minTemp = doc["mintemp"]; // 90
-  //    settings_maxTemp = doc["maxtemp"]; // 90
-  //    settings_desiredTemp = doc["desiredtemp"]; // 70
-  //    Serial.println("Boiler volume set to "+String(settings_volume)+"l");
-  //    Serial.println("Boiler wattage set to "+String(settings_wattage)+"W");
-  //    Serial.println("Boiler minimum temperature set to "+String(settings_minTemp)+"°");
-  //    Serial.println("Boiler maximum temperature set to "+String(settings_maxTemp)+"°");
-  //    Serial.println("Boiler desired temperature set to "+String(settings_desiredTemp)+"°");
-  //    boilerDesiredTemp = settings_desiredTemp;
-  //  });
+    // Subscribe to "P2H/___/settings" and display received message to Serial
+    client.subscribe("P2H/"+topic+"/settings", [](const String & payload) {
+      const size_t capacity = JSON_OBJECT_SIZE(5) + 50;
+      DynamicJsonDocument doc(capacity);
+      deserializeJson(doc, payload);
+      settings_volume = doc["volume"]; // 500
+      settings_wattage = doc["wattage"];
+      settings_minTemp = doc["mintemp"]; // 90
+      settings_maxTemp = doc["maxtemp"]; // 90
+      settings_desiredTemp = doc["desiredtemp"]; // 70
+      Serial.println("Boiler volume set to "+String(settings_volume)+"l");
+      Serial.println("Boiler wattage set to "+String(settings_wattage)+"W");
+      Serial.println("Boiler minimum temperature set to "+String(settings_minTemp)+"°");
+      Serial.println("Boiler maximum temperature set to "+String(settings_maxTemp)+"°");
+      Serial.println("Boiler desired temperature set to "+String(settings_desiredTemp)+"°");
+      boilerDesiredTemp = settings_desiredTemp;
+    });
 
-  // Subscribe to "P2H/___/settings" and display received message to Serial
-  client.subscribe("P2H/" + topic + "/test", [](const String & payload) {
-    const size_t capacity = JSON_OBJECT_SIZE(5) + 50;
-    DynamicJsonDocument doc(capacity);
-    DeserializationError err = deserializeJson(doc, payload);
-    if (err) {
-      Serial.print(F("deserializeJson() failed with code "));
-      Serial.println(err.c_str());
-    }
-    deserializeJson(doc, payload, DeserializationOption::NestingLimit(2));
-    settings_volume = doc[0]; // 500
-    JsonObject root = doc.to<JsonObject>();
-    Serial.println(root);
-    
-    JsonArray array = root.to<JsonArray>();
-     Serial.println(array);
 
-     Serial.println(array.getElement(0));
-     
-
-    //settings_wattage = doc["wattage"];
-    //settings_minTemp = doc["mintemp"]; // 90
-    //settings_maxTemp = doc["maxtemp"]; // 90
-    //settings_desiredTemp = doc["desiredtemp"]; // 70
-    Serial.println("Boiler volume set to " + String(settings_volume) + "l");
-    //Serial.println("Boiler wattage set to "+String(settings_wattage)+"W");
-    //Serial.println("Boiler minimum temperature set to "+String(settings_minTemp)+"°");
-    //Serial.println("Boiler maximum temperature set to "+String(settings_maxTemp)+"°");
-    //Serial.println("Boiler desired temperature set to "+String(settings_desiredTemp)+"°");
-    //boilerDesiredTemp = settings_desiredTemp;
-
-  });
 
   // Subscribe to "P2H/___/commands" and display received message to Serial
   client.subscribe("P2H/" + topic + "/commands", [](const String & payload) {
