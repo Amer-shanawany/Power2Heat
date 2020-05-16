@@ -2,7 +2,7 @@
 const String topic = BOILERID; //
 
 //Interval
-const long dataInterval = 600; // om de 10 minuten wordt de data geupdatet
+const long dataInterval = 300; // om de 5 minuten wordt de data geupdatet
 const long sensorInterval = 10; // om de 10 sec worden de sensoren uitgelezen
 
 //Boiler variables
@@ -14,7 +14,7 @@ float boilerDesiredTemp = 70.0; //
 long data_timestamp = 0;
 float data_charge = 0.0; //in % minTemp = 0% // maxTemp = 100%
 float data_volume = 0.0; // in l
-float data_temp = 68.83; // in °C - use 68.83° to simulate 
+float data_temp = 70.0; // in °C - use 68.83° to simulate 
 boolean data_power = false;
 
 //Constants
@@ -31,7 +31,16 @@ uint16_t settings_volume = 120; //volume van de boiler
 uint16_t settings_wattage = 3200; //wattage van de boiler
 float settings_minTemp = 60.0; //min temperatuur van de boiler
 float settings_maxTemp = 90.0; //max temperatuur van de boiler
-float settings_desiredTemp = 70.0; //gewenste temperatuur van de boiler
+//float settings_desiredTemp = 70.0; //gewenste temperatuur van de boiler
+
+//Profile
+typedef struct DFHSQFGKSQHJG{
+    uint16_t time;
+    uint8_t temp;
+} TimeTemp_t;
+
+TimeTemp_t myProfile[21] = {{0, 70}, {10080, 70}, {10080, 70}, {10080, 70}, {10080, 70}, {10080, 70}, {10080, 70}, {10080, 70}, {10080, 70}, {10080, 70}, {10080, 70}, {10080, 70}, {10080, 70}, {10080, 70}, {10080, 70}, {10080, 70}, {10080, 70}, {10080, 70}, {10080, 70}, {10080, 70}, {10080, 70}};
+uint16_t timeCode = 0;
 
 //Commands;
 boolean commands_P2H = false; //true when powered!!!
@@ -51,23 +60,21 @@ long myTime;
 #include <NTPClient.h>
 #include <ESP8266WiFi.h>
 #include <WiFiUdp.h>
-const long utcOffsetInSeconds = 0; //0 = zomertijd - 3600 = wintertijd
+const long utcOffsetInSeconds = 7200; // offset ZOMERTIJD = 7200 // WINTERTIJD = 3600
 char daysOfTheWeek[7][12] = {"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"};
 WiFiUDP ntpUDP;
 NTPClient timeClient(ntpUDP, "pool.ntp.org", utcOffsetInSeconds);
 long currentTime;
 
 //MQTT
+// !!! change MQTT_MAX_PACKET_SIZE 512 in PubSubClient.h
 #include "EspMQTTClient.h"
-
-#undef  MQTT_MAX_PACKET_SIZE // un-define max packet size
-#define MQTT_MAX_PACKET_SIZE 256  // fix for MQTT client dropping messages over 128B
 
 EspMQTTClient client(
   WIFISSID,         // WifiSSID
   WIFIPASSWORD,     // WifiPassword
-  //88.99.186.143"; // MQTT Broker server ip
-  "192.168.1.43",  // MQTT Broker server ip
+  "88.99.186.143", // MQTT Broker server ip
+  //"192.168.1.43",  // MQTT Broker server ip
   "",               // MQTTUsername - Can be omitted if not needed
   "",               // MQTTPassword - Can be omitted if not needed
   BOILERID,     // Client name that uniquely identify your device
@@ -108,6 +115,20 @@ void setup() {
 void onConnectionEstablished()
 {
   publishData();
+  
+  // Subscribe to "P2H/___/profile" and display received message to Serial
+  client.subscribe("P2H/"+topic+"/profile", [](const String & payload) {
+    const size_t capacity = 2*JSON_ARRAY_SIZE(21) + JSON_OBJECT_SIZE(2) + 20;
+    DynamicJsonDocument doc(capacity);
+    deserializeJson(doc, payload); // 10080
+    JsonArray time = doc["time"];
+    JsonArray temp = doc["temp"];
+    for (int i = 0; i < 21; i++) {
+      myProfile[i].time = time[i];
+      myProfile[i].temp = temp[i];
+    }
+    Serial.println("Profile succesfully received.");
+  });
 
   // Subscribe to "P2H/___/settings" and display received message to Serial
   client.subscribe("P2H/"+topic+"/settings", [](const String & payload) {
@@ -118,13 +139,12 @@ void onConnectionEstablished()
     settings_wattage = doc["wattage"];
     settings_minTemp = doc["mintemp"]; // 90
     settings_maxTemp = doc["maxtemp"]; // 90
-    settings_desiredTemp = doc["desiredtemp"]; // 70
+    //settings_desiredTemp = doc["desiredtemp"]; // 70
     Serial.println("Boiler volume set to "+String(settings_volume)+"l");
     Serial.println("Boiler wattage set to "+String(settings_wattage)+"W");
     Serial.println("Boiler minimum temperature set to "+String(settings_minTemp)+"°");
     Serial.println("Boiler maximum temperature set to "+String(settings_maxTemp)+"°");
-    Serial.println("Boiler desired temperature set to "+String(settings_desiredTemp)+"°");
-    boilerDesiredTemp = settings_desiredTemp;
+    //Serial.println("Boiler desired temperature set to "+String(settings_desiredTemp)+"°");
   });
 
   // Subscribe to "P2H/___/commands" and display received message to Serial
@@ -132,12 +152,7 @@ void onConnectionEstablished()
     const size_t capacity = JSON_OBJECT_SIZE(1) + 20;
     DynamicJsonDocument doc(capacity);
     deserializeJson(doc, payload);
-    commands_P2H = doc["P2H"]; // true
-    if (commands_P2H) {
-      boilerDesiredTemp = settings_maxTemp;
-    } else {
-      boilerDesiredTemp = settings_desiredTemp;
-    }
+    commands_P2H = doc["P2H"]; // true or false
   });
 }
 
@@ -150,6 +165,22 @@ void loop()
   if (myTime >= prevSensorTime + sensorInterval) { // check usedVolume
     //SIMULATIE AFKOELING
     data_temp *= 0.9999;
+
+    // Set desired temp
+    if (commands_P2H) {
+      boilerDesiredTemp = settings_maxTemp;
+    } else {
+      timeCode = timeClient.getDay()*1440+timeClient.getHours()*60+timeClient.getMinutes();
+      // loop through the profile
+      for (int i = 0; i < 21; i++) {
+        if (timeCode >= myProfile[i].time && myProfile[i].time < 10080) { //
+          boilerDesiredTemp = myProfile[i].temp;
+        }
+      }
+    }
+
+    Serial.println("Desired temperature : "+ String(boilerDesiredTemp) + "°C");
+    //Serial.println(boilerDesiredTemp);
 
     // Als de boiler aanstaat gaat de temperatuur volgens berekening omhoog
     if (data_power) {
@@ -209,7 +240,7 @@ void publishData() {
   JsonObject data = doc.createNestedObject("data");
   data["timestamp"] = data_timestamp;
   data["power"] = data_power;
-  data["charge"] = round(data_charge); //data_currentCharge;
+  data["charge"] = String(data_charge, 2).toFloat(); //data_currentCharge;
   data["temp"] = String(data_temp, 2).toFloat(); //data_currentTemp;
   data["volume"] = String(data_volume, 2).toFloat(); //data_usedVolume;
   
