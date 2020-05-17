@@ -31,7 +31,7 @@ uint16_t settings_volume = 120; //volume van de boiler
 uint16_t settings_wattage = 3200; //wattage van de boiler
 float settings_minTemp = 60.0; //min temperatuur van de boiler
 float settings_maxTemp = 90.0; //max temperatuur van de boiler
-//float settings_desiredTemp = 70.0; //gewenste temperatuur van de boiler
+float settings_desiredTemp = 70.0; //gewenste temperatuur van de boiler
 
 //Profile
 typedef struct TimeTemp{
@@ -40,7 +40,6 @@ typedef struct TimeTemp{
 } TimeTemp_t;
 
 const uint8_t profileSize = 50;
-//TimeTemp_t myProfile[profileSize] = {{0, 70}, {10080, 70}, {10080, 70}, {10080, 70}, {10080, 70}, {10080, 70}, {10080, 70}, {10080, 70}, {10080, 70}, {10080, 70}, {10080, 70}, {10080, 70}, {10080, 70}, {10080, 70}, {10080, 70}, {10080, 70}, {10080, 70}, {10080, 70}, {10080, 70}, {10080, 70}, {10080, 70}};
 TimeTemp_t myProfile[profileSize];
 uint16_t timeCode = 0;
 
@@ -128,7 +127,7 @@ void onConnectionEstablished()
   
   // Subscribe to "P2H/___/profile" and display received message to Serial
   client.subscribe("P2H/"+topic+"/profile", [](const String & payload) {
-    const size_t capacity = JSON_ARRAY_SIZE(50) + 50*JSON_OBJECT_SIZE(2) + 560;
+    const size_t capacity = JSON_ARRAY_SIZE(profileSize) + profileSize*JSON_OBJECT_SIZE(2) + 560;
     DynamicJsonDocument doc(capacity);
     deserializeJson(doc, payload);
 
@@ -145,19 +144,19 @@ void onConnectionEstablished()
 
   // Subscribe to "P2H/___/settings" and display received message to Serial
   client.subscribe("P2H/"+topic+"/settings", [](const String & payload) {
-    const size_t capacity = JSON_OBJECT_SIZE(5) + 50;
+    const size_t capacity = JSON_OBJECT_SIZE(5) + 70;
     DynamicJsonDocument doc(capacity);
     deserializeJson(doc, payload);
     settings_volume = doc["volume"]; // 500
     settings_wattage = doc["wattage"];
     settings_minTemp = doc["mintemp"]; // 90
     settings_maxTemp = doc["maxtemp"]; // 90
-    //settings_desiredTemp = doc["desiredtemp"]; // 70
+    settings_desiredTemp = doc["desiredtemp"]; // 70
     Serial.println("Boiler volume set to "+String(settings_volume)+"l");
     Serial.println("Boiler wattage set to "+String(settings_wattage)+"W");
     Serial.println("Boiler minimum temperature set to "+String(settings_minTemp)+"°");
     Serial.println("Boiler maximum temperature set to "+String(settings_maxTemp)+"°");
-    //Serial.println("Boiler desired temperature set to "+String(settings_desiredTemp)+"°");
+    Serial.println("Boiler desired temperature set to "+String(settings_desiredTemp)+"°");
   });
 
   // Subscribe to "P2H/___/commands" and display received message to Serial
