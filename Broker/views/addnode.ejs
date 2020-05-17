@@ -1,26 +1,18 @@
+<p></p><br>
+<h1 class="mt-4">Add a boiler</h1>
 <div class="row mt-5">
 
+  <form action="/users/addnode" method="POST">
+    <div class="form-group">
+      <label for="boilerID">Boiler ID:</label>
+      <input type="string" id="boilerID" name="boilerID" class="form-control" placeholder="Enter your boiler ID" />
+    </div>
 
+    <button type="submit" class="btn btn-primary">Submit</button>
+    <a href="/main" class="btn btn-secondary">Back</a>
+  </form>
 
-
-
-<form action="/users/addnode" method="POST">
-  <div class="form-group">
-    <label for="boilerID">Boiler ID:</label>
-    <input
-      type="string"
-      id="boilerID"
-      name="boilerID"
-      class="form-control"
-      placeholder="Enter your boiler ID"
-    />
-  </div>
-
-  <button type="submit" class="btn btn-primary">Submit</button>
-  <a href="/main" class="btn btn-secondary">Back</a>
-</form>
-
-<br />
-<%- include('./partials/messages.ejs') %>
+  <br />
+  <%- include('./partials/messages.ejs') %>
 
 </div>

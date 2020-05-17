@@ -1,18 +1,19 @@
 const mongoose = require('mongoose');
+const subProfileSchema = new mongoose.Schema({
+
+    time: {
+        type: Number
+    },
+    temp: {
+        type: Number
+    }
+
+}, { _id: false });
 const ProfileSchema = new mongoose.Schema({
     id: {
         type: String
     },
-    profiles: [{
-
-        time: {
-            type: Number
-        },
-        temp: {
-            type: Number
-        }
-
-    }]
+    profiles: [subProfileSchema]
 
 });
 
